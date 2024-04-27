@@ -1,0 +1,3 @@
+PyYAML==6.0.1
+Requests==2.31.0
+zmail==0.2.8

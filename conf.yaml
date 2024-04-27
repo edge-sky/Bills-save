@@ -1,0 +1,14 @@
+test_server: False  # 是否测试邮箱SMTP服务器和POP3服务器，可选 True, False
+email:
+  # 用于处理账单邮件的邮箱
+  server:
+    address: ''  #邮箱地址
+    password: ''  # 邮箱密钥，使用POP3协议，注意使用相应的密钥
+  # 用于发送密码和接收状态的邮箱
+  user_address: ''  # 邮箱地址
+  delete_after_used: False  # 在读取邮件后删除邮件，可选 True, False
+  # Notion API 的相关数据，可以参考 https://zhuanlan.zhihu.com/p/679456951
+notion:
+  token: ''  # Notion 集成的密钥
+  type: ''  # 数据类型，为数据库使用请使用 database_id
+  type_id: ''  # type 是数据库请填入数据库的 id
