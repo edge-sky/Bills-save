@@ -9,7 +9,6 @@ import zipfile
 
 from conf import configs
 
-
 # 登录邮箱(邮箱名, 密码)
 server = zmail.server(username=configs['email']['server']['address'], password=configs['email']['server']['password'])
 user_email = configs['email']['user_address']
@@ -182,12 +181,13 @@ def handle_alipay_mail(mail_of_alipay):
                     black_list.append(mail_for_pwd[i]['id'])
                     send_email(subject="支付宝账单密码请求",
                                content='密码 ' + zip_password + '错误' + '\n你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，发信时间为'
-                                              + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
+                                       + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
                     os.remove(temp_path + '/' + mail_of_alipay['attachments'][0][0])
                     print(f'解压成功，密码为{zip_password}')
                     if configs['email']['delete_after_used']:
                         server.delete(mail_of_alipay['Id'])
+                        print('邮件已删除')
                     return state
         # 30秒检查一次
         time.sleep(30)
@@ -251,12 +251,13 @@ def handle_wechat_mail(mail_of_wechat):
                     black_list.append(mail_for_pwd[i]['id'])
                     send_email(subject="微信账单密码请求",
                                content='密码 ' + zip_password + '错误' + '\n你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，发信时间为'
-                                              + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
+                                       + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
                     os.remove(download_path)
                     print(f'解压成功，文件路径为{state}')
                     if configs['email']['delete_after_used']:
                         server.delete(mail_of_wechat['Id'])
+                        print('邮件已删除')
                     return state
         # 30秒检查一次
         time.sleep(30)

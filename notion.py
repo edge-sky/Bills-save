@@ -1,6 +1,6 @@
 import datetime
 import json
-from mail import archive_bill
+from mail import archive_bill, send_email
 from conf import configs
 
 import requests
@@ -98,7 +98,6 @@ def check_contrast(platform):
         datas = json.loads(get_data.text)
         temp_list.extend(datas['results'])
 
-    print(temp_list)
     bill_list = []
     for data in temp_list:
         # 根据平台筛选数据
@@ -112,6 +111,7 @@ def check_contrast(platform):
 
 def sync_bills(platform, update_data):
     nums = 0
+    same_nums = 0
     bill_list = check_contrast(platform)
     week_list = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
     if platform == '微信':
@@ -144,13 +144,14 @@ def sync_bills(platform, update_data):
                         json=body,
                         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
                     )
-                    print(send_data.text)
+                    if configs['output_data']:
+                        print(send_data.text)
                     nums += 1
                 except requests.exceptions.ConnectionError:
                     print("订单号：" + bill[9] + "发送失败")
                     continue
             else:
-                print("该记录已存在")
+                same_nums += 1
     else:
         for bill in update_data:
             if bill[9].replace('\t', '').replace(' ', '') not in bill_list:
@@ -176,13 +177,16 @@ def sync_bills(platform, update_data):
                         json=body,
                         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
                     )
-                    print(send_data.text)
+                    if configs['output_data']:
+                        print(send_data.text)
                     nums += 1
                 except requests.exceptions.ConnectionError:
                     print("订单号：" + bill[9] + "发送失败")
                     continue
 
             else:
-                print("该记录已存在")
+                same_nums += 1
+    send_email(subject="同步完成", content=platform + "同步完成😋\n本次同步了" + str(nums) + "条数据")
     print("成功同步" + str(nums) + "条数据")
+    print("重复数据" + str(same_nums) + "条")
     archive_bill(platform)
