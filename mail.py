@@ -10,7 +10,6 @@ import zipfile
 from conf import configs
 
 # 登录邮箱(邮箱名, 密码)
-server = zmail.server(username=configs['email']['server']['address'], password=configs['email']['server']['password'])
 user_email = configs['email']['user_address']
 # 存放文件地址
 save_path = os.getcwd()
@@ -19,7 +18,7 @@ temp_path = save_path + '/bill_save/temp'
 archives_path = save_path + '/bill_save/archives'
 
 
-def test_server():
+def test_server(server):
     if server.smtp_able():
         print("SMTP服务器连接成功")
 
@@ -67,7 +66,7 @@ def download_file(url, download_path):
 
 
 # 发送请求邮件
-def send_email(subject, content):
+def send_email(server, subject, content):
     mail = {
         'subject': subject,
         'content_text': content
@@ -128,7 +127,7 @@ def init_path():
         os.mkdir(save_path + '/bill_save/temp')
 
 
-def handle_alipay_mail(mail_of_alipay):
+def handle_alipay_mail(server, mail_of_alipay):
     init_path()
     archive_bill("all")
 
@@ -137,8 +136,8 @@ def handle_alipay_mail(mail_of_alipay):
     # 从邮箱获取解压密码
     start_time = datetime.now()
     black_list = [mail_of_alipay['Id']]
-    send_email(subject="支付宝账单密码请求", content='你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
-                                                     + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
+    send_email(server=server, subject="支付宝账单密码请求", content='你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
+                                                                    + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
 
     # 轮询邮箱获取密码
     time.sleep(15)
@@ -179,7 +178,7 @@ def handle_alipay_mail(mail_of_alipay):
                     break
                 elif state == 3:
                     black_list.append(mail_for_pwd[i]['id'])
-                    send_email(subject="支付宝账单密码请求",
+                    send_email(server=server, subject="支付宝账单密码请求",
                                content='密码 ' + zip_password + '错误' + '\n你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，发信时间为'
                                        + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
@@ -193,7 +192,7 @@ def handle_alipay_mail(mail_of_alipay):
         time.sleep(30)
 
 
-def handle_wechat_mail(mail_of_wechat):
+def handle_wechat_mail(server, mail_of_wechat):
     # 初始化环境
     init_path()
     archive_bill("all")
@@ -207,8 +206,8 @@ def handle_wechat_mail(mail_of_wechat):
     # 从邮箱获取解压密码
     start_time = datetime.now()
     black_list = [mail_of_wechat['Id']]
-    send_email(subject="微信账单密码请求", content='你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
-                                                   + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
+    send_email(server=server, subject="微信账单密码请求", content='你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
+                                                                  + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
 
     # 轮询邮箱获取密码
     time.sleep(15)
@@ -249,7 +248,7 @@ def handle_wechat_mail(mail_of_wechat):
                     break
                 elif state == 3:
                     black_list.append(mail_for_pwd[i]['id'])
-                    send_email(subject="微信账单密码请求",
+                    send_email(server=server, subject="微信账单密码请求",
                                content='密码 ' + zip_password + '错误' + '\n你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，发信时间为'
                                        + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
@@ -263,7 +262,7 @@ def handle_wechat_mail(mail_of_wechat):
         time.sleep(30)
 
 
-def get_mails():
+def get_mails(server):
     now_time = datetime.now()
     try_times = 10
     result = []
@@ -286,7 +285,7 @@ def get_mails():
             continue
 
         if len(mails_of_alipay) != 0:
-            result = "支付宝", handle_alipay_mail(mails_of_alipay[0])
+            result = "支付宝", handle_alipay_mail(server=server, mail_of_alipay=mails_of_alipay[0])
         else:
             time.sleep(15)
             try:
@@ -307,7 +306,7 @@ def get_mails():
                 continue
 
             if len(mails_of_wechat) != 0:
-                result = "微信", handle_wechat_mail(mails_of_wechat[0])
+                result = "微信", handle_wechat_mail(server=server, mail_of_wechat=mails_of_wechat[0])
 
         if result:
             return result

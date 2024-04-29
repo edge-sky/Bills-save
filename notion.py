@@ -109,7 +109,7 @@ def check_contrast(platform):
     return bill_list
 
 
-def sync_bills(platform, update_data):
+def sync_bills(server, platform, update_data):
     nums = 0
     same_nums = 0
     bill_list = check_contrast(platform)
@@ -186,7 +186,7 @@ def sync_bills(platform, update_data):
 
             else:
                 same_nums += 1
-    send_email(subject="同步完成", content=platform + "同步完成😋\n本次同步了" + str(nums) + "条数据")
+    send_email(server=server, subject="同步完成", content=platform + "同步完成😋\n本次同步了" + str(nums) + "条数据")
     print("成功同步" + str(nums) + "条数据")
     print("重复数据" + str(same_nums) + "条")
     archive_bill(platform)

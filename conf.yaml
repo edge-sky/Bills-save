@@ -1,4 +1,5 @@
 test_server: False  # 是否测试邮箱SMTP服务器和POP3服务器，可选 True, False
+output_data: False  # 是否输出同步数据，可选 True, False
 email:
   # 用于处理账单邮件的邮箱
   server:
