@@ -11,5 +11,5 @@ email:
   # Notion API 的相关数据，可以参考 https://zhuanlan.zhihu.com/p/679456951
 notion:
   token: ''  # Notion 集成的密钥
-  type: ''  # 数据类型，为数据库使用请使用 database_id
+  type: ''  # 父页面类型，为数据库使用请使用 database_id
   type_id: ''  # type 是数据库请填入数据库的 id

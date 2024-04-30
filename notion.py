@@ -18,7 +18,6 @@ body = {
         "日期": {
             "date": {
                 "start": "",
-                "time_zone": "Asia/Chongqing"
             }
         },
         "星期": {

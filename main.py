@@ -19,8 +19,8 @@ else:
     while True:
         result = get_mails(server)
         if result == -1:
-            if datetime.now() - temp_time > timedelta(minutes=5):
-                print("过去5分钟未收到邮件 " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            if datetime.now() - temp_time > timedelta(hours=1):
+                print("过去一小时未收到邮件 " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 temp_time = datetime.now()
             time.sleep(20)
             continue
