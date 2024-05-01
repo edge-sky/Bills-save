@@ -7,6 +7,8 @@
 此前已经有人尝试过使用 Notion API 进行记账，但手动下载解压再导入实在不够优雅。
 该项目基于 Notion API + Python 实现支付宝与微信账单聚合，使用 zmail 模块以邮件的方式实现更优雅的记账
 
+实现原理是通过解析微信与支付宝提供的账单压缩包中的 .csv 文件，使用 Notion API 向 Table 中添加记录，实现记账的功能
+
 ## 前置条件
 - 注册 Notion 账号并开通一个集成(integration)以使用 Notion API，获取 API 的密钥，后面需要使用，可以参考其他大佬的图文 ([Notion API 探索笔记（一） - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/679456951))
 - python 3.8+ 的环境
