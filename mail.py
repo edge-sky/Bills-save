@@ -18,12 +18,15 @@ temp_path = save_path + '/bill_save/temp'
 archives_path = save_path + '/bill_save/archives'
 
 
-def test_server(server):
-    if server.smtp_able():
-        print("SMTP服务器连接成功")
+def server_login():
+    s = zmail.server(username=configs['email']['server']['address'],
+                     password=configs['email']['server']['password'])
 
-    if server.pop_able():
-        print("POP3服务器连接成功")
+    if s.smtp_able():
+        print("SMTP服务器连接成功")
+        if s.pop_able():
+            print("POP3服务器连接成功")
+            return s
 
 
 # 解压文件
