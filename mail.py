@@ -280,6 +280,9 @@ def get_mails(server):
             time.sleep(15)
             try_times -= 1
             continue
+        except BrokenPipeError:
+            print("连接关闭，尝试重新登录")
+            return -2
         except Exception as e:
             print("在获取支付宝邮件时异常 " + str(e))
             print("15秒后重试")
@@ -301,6 +304,9 @@ def get_mails(server):
                 time.sleep(15)
                 try_times -= 1
                 continue
+            except BrokenPipeError:
+                print("连接关闭，尝试重新登录")
+                return -2
             except Exception as e:
                 print("在获取微信支付邮件时异常 " + str(e))
                 print("15秒后重试")

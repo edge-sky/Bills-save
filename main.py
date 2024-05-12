@@ -24,6 +24,11 @@ while True:
             waiting_time = datetime.now()
         time.sleep(20)
         continue
+    elif result == -2:
+        server = server_login()
+        print("重新登录")
+        re_login_time = datetime.now()
+        continue
 
     platform = result[0]
     path = result[1]
