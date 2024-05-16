@@ -322,3 +322,4 @@ def get_mails(server):
         else:
             return -1
     print("获取邮件失败次数达到上限")
+    return -2
