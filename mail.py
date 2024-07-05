@@ -17,6 +17,10 @@ save_path = os.getcwd()
 temp_path = save_path + '/bill_save/temp'
 archives_path = save_path + '/bill_save/archives'
 
+# return -1 未能获取目标邮件
+# return -2 连接断开，需要重新登录
+# return -3 未能获取解压密码
+
 
 def server_login():
     s = zmail.server(username=configs['email']['server']['address'],
@@ -157,6 +161,9 @@ def handle_alipay_mail(server, mail_of_alipay):
             print("连接重置，15秒后重试")
             time.sleep(15)
             continue
+        except BrokenPipeError:
+            print("连接关闭，尝试重新登录")
+            return -2
         except Exception as e:
             print("在获取支付宝文件密码时异常 " + str(e))
             print("15秒后重试")
@@ -188,11 +195,15 @@ def handle_alipay_mail(server, mail_of_alipay):
                     os.remove(temp_path + '/' + mail_of_alipay['attachments'][0][0])
                     print(f'解压成功，密码为{zip_password}')
                     if configs['email']['delete_after_used']:
+                        print(mail_for_pwd[i]['Id'])
                         server.delete(mail_of_alipay['Id'])
+                        print(mail_for_pwd[i]['Id'])
                         print('邮件已删除')
                     return state
         # 30秒检查一次
         time.sleep(30)
+    print("2小时内未能获取支付宝账单解压密码")
+    return -3
 
 
 def handle_wechat_mail(server, mail_of_wechat):
@@ -216,7 +227,6 @@ def handle_wechat_mail(server, mail_of_wechat):
     time.sleep(15)
     is_loop = True
     while is_loop:
-        print(black_list)
         # 时限为2小时
         if datetime.now() - start_time > timedelta(hours=2):
             break
@@ -227,6 +237,9 @@ def handle_wechat_mail(server, mail_of_wechat):
             print("连接重置，15秒后重试")
             time.sleep(15)
             continue
+        except BrokenPipeError:
+            print("连接关闭，尝试重新登录")
+            return -2
         except Exception as e:
             print("在获取微信文件密码时异常 " + str(e))
             print("15秒后重试")
@@ -256,23 +269,26 @@ def handle_wechat_mail(server, mail_of_wechat):
                                        + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
                     os.remove(download_path)
-                    print(f'解压成功，文件路径为{state}')
+                    print(f'解压成功，密码为{zip_password}')
                     if configs['email']['delete_after_used']:
                         server.delete(mail_of_wechat['Id'])
                         print('邮件已删除')
                     return state
         # 30秒检查一次
         time.sleep(30)
+    print("2小时内未能获取微信账单解压密码")
+    return -3
 
 
-def get_mails(server):
-    now_time = datetime.now()
+def get_mails(receive_time, server):
+    now_time = receive_time
     try_times = 10
     result = []
+    state = None
     while try_times > 0:
         try:
             mails_of_alipay = server.get_mails(subject='支付宝交易流水明细',
-                                               start_time=(now_time - timedelta(minutes=2)).strftime(
+                                               start_time=(now_time - timedelta(minutes=3)).strftime(
                                                    '%Y-%m-%d %H:%M:%S'),
                                                sender='service@mail.alipay.com')
         except ConnectionResetError:
@@ -291,12 +307,13 @@ def get_mails(server):
             continue
 
         if len(mails_of_alipay) != 0:
-            result = "支付宝", handle_alipay_mail(server=server, mail_of_alipay=mails_of_alipay[0])
+            state = handle_alipay_mail(server=server, mail_of_alipay=mails_of_alipay[0])
+            result = "支付宝", state
         else:
             time.sleep(15)
             try:
                 mails_of_wechat = server.get_mails(subject='微信支付',
-                                                   start_time=(now_time - timedelta(minutes=2)).strftime(
+                                                   start_time=(now_time - timedelta(minutes=3)).strftime(
                                                        '%Y-%m-%d %H:%M:%S'),
                                                    sender='wechatpay@tencent.com')
             except ConnectionResetError:
@@ -315,9 +332,16 @@ def get_mails(server):
                 continue
 
             if len(mails_of_wechat) != 0:
-                result = "微信", handle_wechat_mail(server=server, mail_of_wechat=mails_of_wechat[0])
+                state = handle_wechat_mail(server=server, mail_of_wechat=mails_of_wechat[0])
+                result = "微信", state
 
-        if result:
+        if state == -2:
+            send_email(server=server, subject="同步失败", content="服务器连接异常，请稍后再试")
+            return -2
+        elif state == -3:
+            send_email(server=server, subject="同步失败", content="未能获取解压密码")
+            return -3
+        elif state:
             return result
         else:
             return -1

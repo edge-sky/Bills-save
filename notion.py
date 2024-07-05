@@ -8,6 +8,7 @@ import requests
 token = configs['notion']['token']
 parent_type = configs['notion']['type']
 type_id = configs['notion']['type_id']
+database_id = configs['notion']['database_id']
 
 body = {
     "parent": {
@@ -82,6 +83,7 @@ def check_contrast(platform):
         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
     )
     datas = json.loads(get_data.text)
+    print(datas)
     temp_list = []
     temp_list.extend(datas['results'])
 
@@ -90,12 +92,16 @@ def check_contrast(platform):
         print("数据量过大，正在获取更多数据")
         get_data = requests.request(
             'POST',
-            'https://api.notion.com/v1/databases/67d863ff0de448288ad21235576d2ec1/query',
+            'https://api.notion.com/v1/databases/' + database_id + '/query',
             headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
             json={'start_cursor': datas['next_cursor']}
         )
         datas = json.loads(get_data.text)
-        temp_list.extend(datas['results'])
+        try:
+            temp_list.extend(datas['results'])
+        except KeyError:
+            print("Notion 数据库连接异常，请检查相关信息和集成")
+            return -1  # 终止程序
 
     bill_list = []
     for data in temp_list:
@@ -112,6 +118,10 @@ def sync_bills(server, platform, update_data):
     nums = 0
     same_nums = 0
     bill_list = check_contrast(platform)
+
+    if bill_list == -1:
+        return -1
+
     week_list = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
     if platform == '微信':
         for bill in update_data:
@@ -189,3 +199,5 @@ def sync_bills(server, platform, update_data):
     print("成功同步" + str(nums) + "条数据")
     print("重复数据" + str(same_nums) + "条")
     archive_bill(platform)
+
+    return 0
