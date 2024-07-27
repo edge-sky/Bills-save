@@ -31,6 +31,12 @@ def server_login():
         if s.pop_able():
             print("POP3服务器连接成功")
             return s
+        else:
+            print("POP3服务器连接失败")
+            return -1
+    else:
+        print("SMTP服务器连接失败")
+        return -1
 
 
 # 解压文件

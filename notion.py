@@ -7,13 +7,12 @@ import requests
 
 token = configs['notion']['token']
 parent_type = configs['notion']['type']
-type_id = configs['notion']['type_id']
 database_id = configs['notion']['database_id']
 
 body = {
     "parent": {
         "type": parent_type,
-        "database_id": type_id,
+        "database_id": database_id,
     },
     "properties": {
         "日期": {

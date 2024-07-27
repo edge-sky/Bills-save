@@ -13,4 +13,3 @@ notion:
   database_id: '' # 填写你的数据库id，在网页中打开你的数据库页面，看到 url 中形如 https://www.notion.so/a?v=b&pvs=c，其中 a 的部分就是我们要的 id
   token: ''  # Notion 集成的密钥
   type: ''  # 父页面类型，为数据库使用请使用 'database_id'
-  type_id: ''  # type 是数据库请填入数据库的 id

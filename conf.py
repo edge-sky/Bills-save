@@ -7,7 +7,7 @@ path = os.getcwd()
 
 
 def read_config():
-    with open(os.path.join(path, "conf.yaml")) as yaml_file:
+    with open(os.path.join(path, "conf.yaml"), encoding='utf-8') as yaml_file:
         return yaml.safe_load(yaml_file)
 
 
