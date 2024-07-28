@@ -99,7 +99,7 @@ def check_contrast(platform):
         try:
             temp_list.extend(datas['results'])
         except KeyError:
-            print("Notion 数据库连接异常，请检查相关信息和集成")
+            print("Notion 数据库连接异常，请检查相关信息或集成")
             return -1  # 终止程序
 
     bill_list = []

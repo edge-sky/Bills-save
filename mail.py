@@ -25,8 +25,14 @@ archives_path = save_path + '/bill_save/archives'
 
 
 def server_login():
-    s = zmail.server(username=configs['email']['server']['address'],
-                     password=configs['email']['server']['password'])
+    try:
+        s = zmail.server(username=configs['email']['server']['address'],
+                         password=configs['email']['server']['password'])
+    except IndexError as e:
+        print("登录服务端邮箱时出现异常 ")
+        print(e)
+        print("请检查配置文件是否填写完整")
+        return -1
 
     if s.smtp_able():
         print("SMTP服务器连接成功")
