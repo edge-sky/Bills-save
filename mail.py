@@ -1,5 +1,7 @@
 import os
+import random
 import shutil
+import string
 import time
 import requests
 import zmail
@@ -140,16 +142,25 @@ def init_path():
         os.mkdir(save_path + '/bill_save/temp')
 
 
+# 生产随机码用于标示邮件
+def generate_code(length):
+    # 获取所有字母和数字的数组
+    code_chars = string.ascii_letters + string.digits
+    # 随机生成 length 个随机码
+    return ''.join(random.choice(code_chars) for _ in range(length))
+
+
 def handle_alipay_mail(server, mail_of_alipay):
     init_path()
     archive_bill("all")
+    random_code = generate_code(6)
 
     # 保存附件
     zmail.save_attachment(mail_of_alipay, temp_path, overwrite=True)
     # 从邮箱获取解压密码
     start_time = datetime.now()
     black_list = [mail_of_alipay['Id']]
-    send_email(server=server, subject="支付宝账单密码请求", content='你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
+    send_email(server=server, subject="<" + random_code + ">支付宝账单密码请求", content='你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
                                                                     + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
 
     # 轮询邮箱获取密码
@@ -161,7 +172,7 @@ def handle_alipay_mail(server, mail_of_alipay):
             break
         # 接收请求邮箱之后的回复邮箱
         try:
-            mail_for_pwd = server.get_mails(subject='回复：支付宝账单密码请求',
+            mail_for_pwd = server.get_mails(subject='<' + random_code + '>支付宝账单密码请求',
                                             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"))
         except ConnectionResetError:
             print("连接重置，15秒后重试")
@@ -194,7 +205,7 @@ def handle_alipay_mail(server, mail_of_alipay):
                     break
                 elif state == 3:
                     black_list.append(mail_for_pwd[i]['id'])
-                    send_email(server=server, subject="支付宝账单密码请求",
+                    send_email(server=server, subject='<' + random_code + '>支付宝账单密码请求',
                                content='密码 ' + zip_password + '错误' + '\n你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，发信时间为'
                                        + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
@@ -206,6 +217,7 @@ def handle_alipay_mail(server, mail_of_alipay):
                         print(mail_for_pwd[i]['Id'])
                         print('邮件已删除')
                     return state
+        print("未获取支付宝账单解压密码，30s后重试")
         # 30秒检查一次
         time.sleep(30)
     print("2小时内未能获取支付宝账单解压密码")
@@ -216,6 +228,7 @@ def handle_wechat_mail(server, mail_of_wechat):
     # 初始化环境
     init_path()
     archive_bill("all")
+    random_code = generate_code(6)
 
     # 获取下载地址
     content = str(mail_of_wechat['content_html'])
@@ -226,7 +239,7 @@ def handle_wechat_mail(server, mail_of_wechat):
     # 从邮箱获取解压密码
     start_time = datetime.now()
     black_list = [mail_of_wechat['Id']]
-    send_email(server=server, subject="微信账单密码请求", content='你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
+    send_email(server=server, subject="<" + random_code + ">微信账单密码请求", content='你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
                                                                   + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
 
     # 轮询邮箱获取密码
@@ -237,7 +250,7 @@ def handle_wechat_mail(server, mail_of_wechat):
         if datetime.now() - start_time > timedelta(hours=2):
             break
         try:
-            mail_for_pwd = server.get_mails(subject='回复：微信账单密码请求',
+            mail_for_pwd = server.get_mails(subject='<' + random_code + '>微信账单密码请求',
                                             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"))
         except ConnectionResetError:
             print("连接重置，15秒后重试")
@@ -270,7 +283,7 @@ def handle_wechat_mail(server, mail_of_wechat):
                     break
                 elif state == 3:
                     black_list.append(mail_for_pwd[i]['id'])
-                    send_email(server=server, subject="微信账单密码请求",
+                    send_email(server=server, subject="<" + random_code + ">微信账单密码请求",
                                content='密码 ' + zip_password + '错误' + '\n你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，发信时间为'
                                        + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
@@ -280,6 +293,7 @@ def handle_wechat_mail(server, mail_of_wechat):
                         server.delete(mail_of_wechat['Id'])
                         print('邮件已删除')
                     return state
+        print("未获取微信账单解压密码，30s后重试")
         # 30秒检查一次
         time.sleep(30)
     print("2小时内未能获取微信账单解压密码")

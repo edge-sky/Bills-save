@@ -1,4 +1,3 @@
-test_server: False  # 是否测试邮箱SMTP服务器和POP3服务器，可选 True, False
 output_data: False  # 是否输出同步数据，可选 True, False
 email:
   # 用于处理账单邮件的邮箱
@@ -7,7 +6,7 @@ email:
     password: ''  # 邮箱密钥，使用POP3协议，注意使用相应的密钥
   # 用于发送密码和接收状态的邮箱
   user_address: ''  # 邮箱地址
-  delete_after_used: False  # 在读取邮件后删除邮件，可选 True, False
+  delete_after_used: False  # 在读取邮件后删除邮件(你没用哩!)，防止邮箱一堆邮件，可选 True, False
   # Notion API 的相关数据，可以参考 https://zhuanlan.zhihu.com/p/679456951
 notion:
   database_id: '' # 填写你的数据库id，在网页中打开你的数据库页面，看到 url 中形如 https://www.notion.so/a?v=b&pvs=c，其中 a 的部分就是我们要的 id
