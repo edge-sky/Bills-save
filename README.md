@@ -15,9 +15,22 @@
 - 两个邮箱：一个用于接收账单信息与通知，作为服务端，**需要开通 POP 功能**；一个用于发送解压密码与接收消息通知，作为客户端
 
 ## 创建 Notion 数据库
+可选使用模板导入或手动创建
+### 模板导入(推荐)
+1. 使用已上线的模板 ([聚合记账](https://www.notion.so/zh-cn/templates/aggregate-bills)) 导入
+2. 在该模板中的内嵌数据库中点击查看数据库
+
+![image](https://github.com/user-attachments/assets/c7ed04b9-e43d-4ec9-bd35-89c66e72c9e8)
+
+4. 右上角的菜单中选择拷贝链接，在该网址中找到页面的 id，url 形如 notion.so/你的id?v=xxx，将 id 的部分记下
+
+![image](https://github.com/user-attachments/assets/c7ed04b9-e43d-4ec9-bd35-89c66e72c9e8)
+
+
+### 手动创建
 1. 创建一个 page
 2. 在 page 中创建一个 table
-3. 在网页中打开你刚刚创建的包含 table 的页面，在网址中找到那个页面的 id，url 形如 notion.so/你的id/
+3. 在网页中打开你刚刚创建的包含 table 的页面，在网址中找到那个页面的 id，url 形如 notion.so/你的id?v=xxx，将 id 的部分记下
 4. 编辑你的数据库，设置以下属性
 
 #### 注：数据库本身会创建一个不可删除的 title 属性，将其作为 <账单信息> 属性
