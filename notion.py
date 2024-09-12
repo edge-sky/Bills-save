@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 from mail import archive_bill, send_email
 from conf import configs
@@ -78,7 +78,7 @@ def check_contrast(platform):
     # 第一次获取数据
     get_data = requests.request(
         'POST',
-        'https://api.notion.com/v1/databases/67d863ff0de448288ad21235576d2ec1/query',
+        'https://api.notion.com/v1/databases/' + database_id + '/query',
         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
     )
     datas = json.loads(get_data.text)
@@ -96,10 +96,17 @@ def check_contrast(platform):
             json={'start_cursor': datas['next_cursor']}
         )
         datas = json.loads(get_data.text)
+        print(datas)
         try:
             temp_list.extend(datas['results'])
-        except KeyError:
+            last_day = datetime.strptime(temp_list[-1]['properties']['日期']['date']['start'][:10], '%Y-%m-%d')
+            now_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            if (now_day - last_day).days >= 100:
+                print("已查询最近100天的数据")
+                break
+        except KeyError as e:
             print("Notion 数据库连接异常，请检查相关信息或集成")
+            print(e)
             return -1  # 终止程序
 
     bill_list = []
@@ -128,7 +135,7 @@ def sync_bills(server, platform, update_data):
             if bill[8].replace('\t', '').replace(' ', '') not in bill_list:
                 body['properties']['日期']['date']['start'] = bill[0] + '+08:00'
                 body['properties']['星期']['select']['name'] = week_list[
-                    datetime.datetime.strptime(bill[0], "%Y-%m-%d %H:%M:%S").weekday()]
+                    datetime.strptime(bill[0], "%Y-%m-%d %H:%M:%S").weekday()]
                 body['properties']['金额']['number'] = float(bill[5].replace('¥', ''))
                 body['properties']['交易平台']['select']['name'] = platform
                 body['properties']['交易类型']['select']['name'] = bill[4]
@@ -165,7 +172,7 @@ def sync_bills(server, platform, update_data):
             if bill[9].replace('\t', '').replace(' ', '') not in bill_list:
                 body['properties']['日期']['date']['start'] = bill[0] + '+08:00'
                 body['properties']['星期']['select']['name'] = week_list[
-                    datetime.datetime.strptime(bill[0], "%Y-%m-%d %H:%M:%S").weekday()]
+                    datetime.strptime(bill[0], "%Y-%m-%d %H:%M:%S").weekday()]
                 body['properties']['账单信息']['title'][0]['text']['content'] = bill[4]
                 body['properties']['金额']['number'] = float(bill[6].replace('¥', ''))
                 body['properties']['交易平台']['select']['name'] = platform
