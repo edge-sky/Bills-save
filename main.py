@@ -1,11 +1,9 @@
 import time
 from datetime import datetime, timedelta
 
-
 from mail import get_mails, server_login
 from notion import sync_bills
 from data_handler import alipay_data, wechat_data
-
 
 server = server_login()
 
@@ -31,12 +29,14 @@ if server != -1:
                     waiting_time = datetime.now()
                 # 重置收件时间
                 receive_time = datetime.now()
-                time.sleep(20)
+                time.sleep(60)
                 continue
             elif result == -2:
                 server = server_login()
-                if server == -1:
-                    break
+                while server == -1:
+                    print("登录异常，五分钟后重试")
+                    time.sleep(3000)
+                    server = server_login()
                 print("重新登录")
                 re_login_time = datetime.now()
                 continue

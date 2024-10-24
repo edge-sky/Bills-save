@@ -8,9 +8,12 @@ def alipay_data(filepath):
         jump_line = True
         for row in reader:
             if not is_start:
-                if "电子客户回单" in row[0]:
-                    is_start = True
+                # 支付宝可能存在空行，防止越界
+                for item in row:
+                    if "电子客户回单" in item:
+                        is_start = True
                 continue
+            # 跳过说明行
             if jump_line:
                 jump_line = False
                 continue
@@ -26,9 +29,12 @@ def wechat_data(filepath):
         is_start = False
         jump_line = True
         for row in reader:
+            print(row)
             if not is_start:
-                if "微信支付账单明细列表" in row[0]:
-                    is_start = True
+                # 与支付宝统一格式
+                for item in row:
+                    if "微信支付账单明细列表" in item:
+                        is_start = True
                 continue
             if jump_line:
                 jump_line = False
