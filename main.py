@@ -35,7 +35,7 @@ if server != -1:
                 server = server_login()
                 while server == -1:
                     print("登录异常，五分钟后重试")
-                    time.sleep(3000)
+                    time.sleep(300)
                     server = server_login()
                 print("重新登录")
                 re_login_time = datetime.now()
