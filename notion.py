@@ -8,6 +8,9 @@ import requests
 token = configs['notion']['token']
 parent_type = configs['notion']['type']
 database_id = configs['notion']['database_id']
+debug = configs['debug']
+if type(debug) is not bool:
+    debug = False
 
 body = {
     "parent": {
@@ -82,13 +85,15 @@ def check_contrast(platform):
         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
     )
     datas = json.loads(get_data.text)
-    print(datas)
+    if debug:
+        print(datas)
     temp_list = []
     temp_list.extend(datas['results'])
 
     # 如果一页不能加载完所有数据，继续获取，防止添加重复数据（折磨了作者三天才发现
     while datas['has_more']:
-        print("数据量过大，正在获取更多数据")
+        if debug:
+            print("数据量过大，正在获取更多数据")
         get_data = requests.request(
             'POST',
             'https://api.notion.com/v1/databases/' + database_id + '/query',
@@ -96,7 +101,8 @@ def check_contrast(platform):
             json={'start_cursor': datas['next_cursor']}
         )
         datas = json.loads(get_data.text)
-        print(datas)
+        if debug:
+            print(datas)
         try:
             temp_list.extend(datas['results'])
             last_day = datetime.strptime(temp_list[-1]['properties']['日期']['date']['start'][:10], '%Y-%m-%d')
@@ -106,7 +112,8 @@ def check_contrast(platform):
                 break
         except KeyError as e:
             print("Notion 数据库连接异常，请检查相关信息或集成")
-            print(e)
+            if debug:
+                print(e)
             return -1  # 终止程序
 
     bill_list = []
@@ -116,7 +123,8 @@ def check_contrast(platform):
             try:
                 bill_list.append(data['properties']['平台交易单号']['rich_text'][0]['text']['content'])
             except IndexError:
-                print("该记录未填写订单号 " + str(data))
+                if debug:
+                    print("该记录未填写订单号 " + str(data))
     return bill_list
 
 
@@ -201,7 +209,7 @@ def sync_bills(server, platform, update_data):
 
             else:
                 same_nums += 1
-    send_email(server=server, subject="同步完成", content=platform + "同步完成😋\n本次同步了" + str(nums) + "条数据")
+    send_email(server=server, subject="同步完成", content=platform + "同步完成\n本次同步了" + str(nums) + "条数据")
     print("成功同步" + str(nums) + "条数据")
     print("重复数据" + str(same_nums) + "条")
     archive_bill(platform)

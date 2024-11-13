@@ -18,6 +18,11 @@ save_path = os.getcwd()
 
 temp_path = save_path + '/bill_save/temp'
 archives_path = save_path + '/bill_save/archives'
+interval = configs['email']['server']['interval']
+debug = configs['debug']
+if type(debug) is not bool:
+    debug = False
+
 
 # return -1 未能获取目标邮件
 # return -2 连接断开，需要重新登录
@@ -28,9 +33,10 @@ def server_login():
     try:
         s = zmail.server(username=configs['email']['server']['address'],
                          password=configs['email']['server']['password'])
-    except IndexError as e:
+    except Exception as e:
         print("登录服务端邮箱时出现异常 ")
-        print(e)
+        if debug:
+            print(e)
         print("请检查配置文件是否填写完整")
         return -1
 
@@ -45,6 +51,19 @@ def server_login():
     else:
         print("SMTP服务器连接失败")
         return -1
+
+
+def re_login():
+    for delay_time in [300, 900, 1800, 2700, 3600]:
+        print(str(int(delay_time / 60)) + "分钟后重试")
+        time.sleep(delay_time)
+        server = server_login()
+        if server != -1:
+            break
+    while server == -1:
+        print("重新登录失败，等待1小时后重试")
+        time.sleep(3600)
+        server = server_login()
 
 
 # 解压文件
@@ -166,13 +185,15 @@ def handle_alipay_mail(server, mail_of_alipay):
     # 从邮箱获取解压密码
     start_time = datetime.now()
     black_list = [mail_of_alipay['Id']]
-    send_email(server=server, subject="<" + random_code + ">支付宝账单密码请求", content='你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
-                                                                    + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
+    send_email(server=server, subject="<" + random_code + ">支付宝账单密码请求",
+               content='你正在对支付宝进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
+                       + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
 
     # 轮询邮箱获取密码
-    time.sleep(15)
+    time.sleep(interval)
     is_loop = True
-    while is_loop:
+    try_times = 3
+    while is_loop and try_times > 0:
         # 时限为2小时
         if datetime.now() - start_time > timedelta(hours=2):
             break
@@ -181,16 +202,21 @@ def handle_alipay_mail(server, mail_of_alipay):
             mail_for_pwd = server.get_mails(subject='<' + random_code + '>支付宝账单密码请求',
                                             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"))
         except ConnectionResetError:
-            print("连接重置，15秒后重试")
-            time.sleep(15)
+            print("连接重置，即将尝试重连")
+            try_times -= 1
+            time.sleep(interval)
             continue
         except BrokenPipeError:
-            print("连接关闭，尝试重新登录")
-            return -2
+            print("连接关闭，将尝试重新登录")
+            try_times -= 1
+            re_login()
+            continue
         except Exception as e:
-            print("在获取支付宝文件密码时异常 " + str(e))
-            print("15秒后重试")
-            time.sleep(15)
+            if debug:
+                print("在获取支付宝文件密码时异常 " + str(e))
+            print("收取邮件时遇到错误，即将重试")
+            try_times -= 1
+            time.sleep(interval)
             continue
 
         if len(mail_for_pwd) != 0:
@@ -216,17 +242,22 @@ def handle_alipay_mail(server, mail_of_alipay):
                                        + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
                 else:
                     os.remove(temp_path + '/' + mail_of_alipay['attachments'][0][0])
-                    print(f'解压成功，密码为{zip_password}')
+                    if debug:
+                        print(f'解压成功，密码为{zip_password}')
+                    else:
+                        print('解压成功')
                     if configs['email']['delete_after_used']:
-                        print(mail_for_pwd[i]['Id'])
+                        if debug:
+                            print(mail_for_pwd[i]['Id'])
                         server.delete(mail_of_alipay['Id'])
-                        print(mail_for_pwd[i]['Id'])
                         print('邮件已删除')
                     return state
-        print("未获取支付宝账单解压密码，30s后重试")
-        # 30秒检查一次
-        time.sleep(30)
+        print("未获取支付宝账单解压密码，即将重试")
+        time.sleep(interval)
+    if try_times == 0:
+        return -4
     print("2小时内未能获取支付宝账单解压密码")
+    send_email(server=server, subject="同步失败", content="未能获取解压密码")
     return -3
 
 
@@ -245,13 +276,15 @@ def handle_wechat_mail(server, mail_of_wechat):
     # 从邮箱获取解压密码
     start_time = datetime.now()
     black_list = [mail_of_wechat['Id']]
-    send_email(server=server, subject="<" + random_code + ">微信账单密码请求", content='你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
-                                                                  + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
+    send_email(server=server, subject="<" + random_code + ">微信账单密码请求",
+               content='你正在对微信进行记账操作，你需要对这封邮件回复6位数字解压密码，有效时间2小时，发信时间为'
+                       + datetime.now().strftime("%m-%d %H:%M:%S") + '。')
 
     # 轮询邮箱获取密码
-    time.sleep(15)
+    time.sleep(interval)
     is_loop = True
-    while is_loop:
+    try_times = 3
+    while is_loop and try_times > 0:
         # 时限为2小时
         if datetime.now() - start_time > timedelta(hours=2):
             break
@@ -259,16 +292,21 @@ def handle_wechat_mail(server, mail_of_wechat):
             mail_for_pwd = server.get_mails(subject='<' + random_code + '>微信账单密码请求',
                                             start_time=start_time.strftime("%Y-%m-%d %H:%M:%S"))
         except ConnectionResetError:
-            print("连接重置，15秒后重试")
-            time.sleep(15)
+            print("连接重置，即将重试")
+            try_times -= 1
+            time.sleep(interval)
             continue
         except BrokenPipeError:
-            print("连接关闭，尝试重新登录")
-            return -2
+            print("连接关闭，将尝试重新登录")
+            try_times -= 1
+            re_login()
+            continue
         except Exception as e:
-            print("在获取微信文件密码时异常 " + str(e))
-            print("15秒后重试")
-            time.sleep(15)
+            if debug:
+                print("在获取微信文件密码时异常 " + str(e))
+            print("收取邮件时遇到错误，即将重试")
+            try_times -= 1
+            time.sleep(interval)
             continue
 
         if len(mail_for_pwd) != 0:
@@ -299,72 +337,74 @@ def handle_wechat_mail(server, mail_of_wechat):
                         server.delete(mail_of_wechat['Id'])
                         print('邮件已删除')
                     return state
-        print("未获取微信账单解压密码，30s后重试")
-        # 30秒检查一次
-        time.sleep(30)
+        print("未获取微信账单解压密码，即将重试")
+        time.sleep(interval)
+    if try_times == 0:
+        return -4
     print("2小时内未能获取微信账单解压密码")
+    send_email(server=server, subject="同步失败", content="未能获取解压密码")
     return -3
 
 
-def get_mails(receive_time, server):
-    now_time = receive_time
-    try_times = 10
+def get_mail(receive_time, server):
+    try_times = 3
     result = []
     state = None
     while try_times > 0:
         try:
             mails_of_alipay = server.get_mails(subject='支付宝交易流水明细',
-                                               start_time=(now_time - timedelta(minutes=3)).strftime(
+                                               start_time=receive_time.strftime(
                                                    '%Y-%m-%d %H:%M:%S'),
                                                sender='service@mail.alipay.com')
         except ConnectionResetError:
-            print("连接重置，15秒后重试")
-            time.sleep(15)
+            print("连接重置，即将重试")
+            time.sleep(interval)
             try_times -= 1
             continue
         except BrokenPipeError:
-            print("连接关闭，尝试重新登录")
-            return -2
+            print("连接关闭，将尝试重新登录")
+            re_login()
+            continue
         except Exception as e:
-            print("在获取支付宝邮件时异常 " + str(e))
-            print("15秒后重试")
-            time.sleep(15)
+            if debug:
+                print("在获取支付宝邮件时异常 " + str(e))
+            print("收取邮件时遇到错误，即将重试")
             try_times -= 1
+            time.sleep(interval)
             continue
 
         if len(mails_of_alipay) != 0:
             state = handle_alipay_mail(server=server, mail_of_alipay=mails_of_alipay[0])
             result = "支付宝", state
         else:
-            time.sleep(15)
+            time.sleep(interval)
             try:
                 mails_of_wechat = server.get_mails(subject='微信支付',
-                                                   start_time=(now_time - timedelta(minutes=3)).strftime(
+                                                   start_time=receive_time.strftime(
                                                        '%Y-%m-%d %H:%M:%S'),
                                                    sender='wechatpay@tencent.com')
             except ConnectionResetError:
-                print("连接重置，15秒后重试")
-                time.sleep(15)
+                print("连接重置，即将重试")
+                time.sleep(interval)
                 try_times -= 1
                 continue
             except BrokenPipeError:
-                print("连接关闭，尝试重新登录")
-                return -2
+                print("连接关闭，将尝试重新登录")
+                re_login()
+                continue
             except Exception as e:
-                print("在获取微信支付邮件时异常 " + str(e))
-                print("15秒后重试")
-                time.sleep(15)
+                if debug:
+                    print("在获取微信支付邮件时异常 " + str(e))
+                print("收取邮件时遇到错误，即将重试")
                 try_times -= 1
+                time.sleep(interval)
                 continue
 
             if len(mails_of_wechat) != 0:
                 state = handle_wechat_mail(server=server, mail_of_wechat=mails_of_wechat[0])
                 result = "微信", state
 
-        if state == -2:
-            send_email(server=server, subject="同步失败", content="服务器连接异常，请稍后再试")
-            return -2
-        elif state == -3:
+        if state == -3:
             send_email(server=server, subject="同步失败", content="未能获取解压密码")
             return -3
         elif state:

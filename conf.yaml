@@ -1,14 +1,26 @@
-output_data: False  # 是否输出同步数据，可选 True, False
+# 调试模式，可选 True, False
+debug: False
 email:
   # 用于处理账单邮件的邮箱
   server:
-    address: ''  #邮箱地址
-    password: ''  # 邮箱密钥，使用POP3协议，注意使用相应的密钥
+    #中转邮箱地址
+    address: ''
+    # 邮箱密钥，使用POP3协议，注意使用相应的密钥
+    password: ''
+    # 收取邮件间隔，单位秒
+    interval: 60
+
   # 用于发送密码和接收状态的邮箱
-  user_address: ''  # 邮箱地址
-  delete_after_used: False  # 在读取邮件后删除邮件(你没用哩!)，防止邮箱一堆邮件，可选 True, False
-  # Notion API 的相关数据，可以参考 https://zhuanlan.zhihu.com/p/679456951
+  # 目的邮箱地址
+  user_address: ''
+  # 在读取邮件后删除邮件(你没用哩!)，防止邮箱一堆邮件，可选 True, False
+  delete_after_used: False
+
+# Notion API 的相关数据，可以参考 https://zhuanlan.zhihu.com/p/679456951
 notion:
-  database_id: '' # 填写你的数据库id，在网页中打开你的数据库页面，看到 url 中形如 https://www.notion.so/a?v=b&pvs=c，其中 a 的部分就是我们要的 id
-  token: ''  # Notion 集成的密钥
-  type: ''  # 父页面类型，为数据库使用请使用 'database_id'
+  # 填写你的数据库id，在网页中打开你的数据库页面，看到 url 中形如 https://www.notion.so/a?v=b&pvs=c，其中 a 的部分就是我们要的 id
+  database_id: ''
+  # Notion 集成的密钥
+  token: ''
+  # 父页面类型，为数据库使用请使用 'database_id'
+  type: 'database_id'

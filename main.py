@@ -1,11 +1,16 @@
 import time
 from datetime import datetime, timedelta
 
-from mail import get_mails, server_login
+from mail import get_mail, server_login, re_login
 from notion import sync_bills
 from data_handler import alipay_data, wechat_data
+from conf import configs
 
 server = server_login()
+interval = configs['email']['server']['interval']
+debug = configs['debug']
+if type(debug) is not bool:
+    debug = False
 
 if server != -1:
     print("尝试获取邮件")
@@ -22,27 +27,24 @@ if server != -1:
                 print("重新登录")
                 re_login_time = datetime.now()
             # 尝试获取邮件
-            result = get_mails(receive_time, server)
+            result = get_mail(receive_time, server)
             if result == -1:
                 if datetime.now() - waiting_time > timedelta(hours=1):
                     print("过去一小时未收到邮件 " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                     waiting_time = datetime.now()
                 # 重置收件时间
                 receive_time = datetime.now()
-                time.sleep(60)
+                time.sleep(interval)
                 continue
             elif result == -2:
-                server = server_login()
-                while server == -1:
-                    print("登录异常，五分钟后重试")
-                    time.sleep(3000)
-                    server = server_login()
+                re_login()
                 print("重新登录")
                 re_login_time = datetime.now()
                 continue
             elif result == -3:
                 # 重置收件时间
                 receive_time = datetime.now()
+                time.sleep(interval)
                 continue
 
             platform = result[0]
@@ -62,7 +64,8 @@ if server != -1:
                     print("同步异常，终止程序")
                     break
         except TypeError as e:
-            print(e)
+            if debug:
+                print(e)
             server = server_login()
             if server == -1:
                 break

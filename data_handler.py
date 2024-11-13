@@ -1,11 +1,20 @@
 import csv
 
+from conf import configs
+
+debug = configs['debug']
+if type(debug) is not bool:
+    debug = False
+
+
 def alipay_data(filepath):
     data = []
     with open(filepath, "r", encoding="gbk") as f:
         reader = csv.reader(f)
         is_start = False
         jump_line = True
+        if debug:
+            print(reader)
         for row in reader:
             if not is_start:
                 # 支付宝可能存在空行，防止越界
@@ -20,6 +29,7 @@ def alipay_data(filepath):
             data.append(row)
     return data
 
+
 # 微信导出字段：交易时间,交易类型,交易对方,商品,金额(元),支付方式,当前状态,备注
 def wechat_data(filepath):
     data = []
@@ -28,6 +38,8 @@ def wechat_data(filepath):
         reader = csv.reader(f)
         is_start = False
         jump_line = True
+        if debug:
+            print(reader)
         for row in reader:
             print(row)
             if not is_start:
