@@ -167,7 +167,7 @@ def sync_bills(server, platform, update_data):
                         json=body,
                         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
                     )
-                    if configs['output_data']:
+                    if debug:
                         print(send_data.text)
                     nums += 1
                 except requests.exceptions.ConnectionError:
@@ -200,7 +200,7 @@ def sync_bills(server, platform, update_data):
                         json=body,
                         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
                     )
-                    if configs['output_data']:
+                    if debug:
                         print(send_data.text)
                     nums += 1
                 except requests.exceptions.ConnectionError:
