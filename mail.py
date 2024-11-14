@@ -352,8 +352,9 @@ def get_mail(receive_time, server):
     state = None
     while try_times > 0:
         try:
+            # 补偿多轮次下接收支付宝和微信邮件的时间差
             mails_of_alipay = server.get_mails(subject='支付宝交易流水明细',
-                                               start_time=receive_time.strftime(
+                                               start_time=(receive_time - timedelta(seconds=interval)).strftime(
                                                    '%Y-%m-%d %H:%M:%S'),
                                                sender='service@mail.alipay.com')
         except ConnectionResetError:
