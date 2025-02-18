@@ -1,5 +1,4 @@
 import csv
-
 from conf import configs
 
 debug = configs['debug']
