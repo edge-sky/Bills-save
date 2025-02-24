@@ -13,7 +13,7 @@ if type(debug) is not bool:
     debug = False
 
 if server != -1:
-    print("尝试获取邮件")
+    print("尝试获取邮件....")
     waiting_time = datetime.now()  # 接收邮件计时器
     re_login_time = datetime.now()  # 重新登录计时器
     receive_time = datetime.now()  # 收件时间

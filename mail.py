@@ -4,6 +4,7 @@ import shutil
 import string
 import time
 import requests
+import traceback
 import zmail
 import re
 from datetime import datetime, timedelta
@@ -36,6 +37,8 @@ def server_login():
     except Exception as e:
         print("登录服务端邮箱时出现异常 ")
         if debug:
+            # print stack
+            traceback.print_exc()
             print(e)
         print("请检查配置文件是否填写完整")
         return -1
@@ -225,7 +228,13 @@ def handle_alipay_mail(server, mail_of_alipay):
                 if mail_for_pwd[i]['Id'] in black_list:
                     continue
                 # 尝试获取密码
-                zip_password = re.search(r'\d{6}', mail_for_pwd[i]['Content_text'][0]).group()
+                print("收到支付宝文件密码请求,mail_for_pwd : ",mail_for_pwd[i])
+                zip_password = re.search(r'\d{6}', mail_for_pwd[i]['Content_text'][0])
+                if zip_password is None:
+                    print("无法获取密码,mail_for_pwd[i]['Content_text'][0] : ",mail_for_pwd[i]['Content_text'][0])
+                    continue
+                else:
+                    zip_password = zip_password.group()
                 state = unzip_with_password(temp_path + '/' + mail_of_alipay['attachments'][0][0], zip_password,
                                             temp_path)
                 if state == 1:
@@ -310,12 +319,20 @@ def handle_wechat_mail(server, mail_of_wechat):
             continue
 
         if len(mail_for_pwd) != 0:
+            print('获取到 ' + str(len(mail_for_pwd)) + ' 条邮件')
             for i in range(0, len(mail_for_pwd)):
                 # 跳过黑名单的邮件
                 if mail_for_pwd[i]['Id'] in black_list:
                     continue
                 # 尝试获取密码
-                zip_password = re.search(r'\d{6}', mail_for_pwd[i]['Content_text'][0]).group()
+                if debug:
+                    print('mail_for_pwd[i] = ' + str(mail_for_pwd[i]))
+                zip_password = re.search(r'\d{6}', mail_for_pwd[i]['Content_text'][0])
+                if zip_password is None:
+                    print('未获取到密码,即将重试,mail_for_pwd[i] = ' + str(mail_for_pwd[i]))
+                    continue
+                zip_password = zip_password.group()
+
                 state = unzip_with_password(zip_file=download_path, password=zip_password, unzip_dir=temp_path)
                 if state == 1:
                     is_loop = False
