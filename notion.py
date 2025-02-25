@@ -84,6 +84,8 @@ def check_contrast(platform):
         'https://api.notion.com/v1/databases/' + database_id + '/query',
         headers={'Authorization': 'Bearer ' + token, 'Notion-Version': '2021-05-13'},
     )
+    if debug:
+        print('get_data',get_data.text)
     datas = json.loads(get_data.text)
     if debug:
         print(datas)
